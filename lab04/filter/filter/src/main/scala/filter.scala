@@ -4,6 +4,7 @@ import org.apache.spark.sql.SparkSession
 
 object filter {
   def main()={
+
     val spark = SparkSession.builder()
       .appName("filter")
       .getOrCreate()
@@ -44,12 +45,12 @@ object filter {
 
     buyValues.write
       .partitionBy("p_date")
-      .mode("append")
+      .mode("overwrite")
       .json(s"$output_dir_prefix/buy")
 
     viewValues.write
       .partitionBy("p_date")
-      .mode("append")
+      .mode("overwrite")
       .json(s"$output_dir_prefix/view")
   }
 }
