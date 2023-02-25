@@ -7,6 +7,7 @@ object filter {
     val spark = SparkSession.builder()
       .appName("filter")
       .getOrCreate()
+    import spark.implicits._
     val offset = spark.sparkContext.getConf.get("offset")
     val topicName = spark.sparkContext.getConf.get("topic_name")
     val output_dir_prefix = spark.sparkContext.getConf.get("output_dir_prefix")
