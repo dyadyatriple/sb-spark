@@ -43,12 +43,12 @@ object filter {
 
     buyValues.write
       .partitionBy("p_date")
-      .mode("overwrite")
-      .json(output_dir_prefix)
+      .mode("append")
+      .json(s"$output_dir_prefix/buy")
 
     viewValues.write
       .partitionBy("p_date")
-      .mode("overwrite")
-      .json(output_dir_prefix)
+      .mode("append")
+      .json(s"$output_dir_prefix/view")
   }
 }
