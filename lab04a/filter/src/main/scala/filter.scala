@@ -3,7 +3,7 @@ import org.apache.spark.sql.functions._
 import org.apache.spark.sql.SparkSession
 
 object filter {
-  def main={
+  def main(args: Array[String])={
 
     val spark = SparkSession.builder()
       .appName("filter")
