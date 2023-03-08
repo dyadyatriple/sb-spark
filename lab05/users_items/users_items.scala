@@ -56,7 +56,7 @@ object users_items {
       .join(buyData, viewData("uid_view") === buyData("uid_buy"), "full")
       .withColumn("uid", coalesce($"uid_view", $"uid_buy"))
       .drop("uid_view", "uid_buy")
-    if (update == 1) {
+    if (update == "1") {
       val existingParquet = spark.read.parquet(s"$output_dir/$maxDateExist")
       val merged_cols = userMatrix.columns.toSet ++ existingParquet.columns.toSet
 
