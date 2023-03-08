@@ -49,13 +49,6 @@ object users_items {
     val maxDateExist = "20200429"
     val maxDateRewrite = "20200430"
 
-
-    val existingParquet = if (update == "1")
-      spark.read.option("mergeSchema", "true")
-        .parquet(s"$output_dir/users-items/$maxDateExist")
-    else spark.emptyDataFrame
-
-
     val viewData = preproc(spark.read.option("mergeSchema", "true").schema(schema).json(s"$input_dir/view/*"), "view")
     val buyData = preproc(spark.read.option("mergeSchema", "true").schema(schema).json(s"$input_dir/buy/*"), "buy")
 
@@ -63,19 +56,29 @@ object users_items {
       .join(buyData, viewData("uid_view") === buyData("uid_buy"), "full")
       .withColumn("uid", coalesce($"uid_view", $"uid_buy"))
       .drop("uid_view", "uid_buy")
-    if (!existingParquet.isEmpty) {
-      userMatrix.withColumn("test_test", lit(1)).write.mode("overwrite").parquet("/user/daniil.dudochkin/test")
-      val newParquet = spark.read.option("mergeSchema", "true").parquet("/user/daniil.dudochkin/test")
-      val res = newParquet.unionAll(existingParquet)
+    if (update == 1) {
+      val existingParquet = spark.read.parquet(s"$output_dir/$maxDateExist")
+      val merged_cols = userMatrix.columns.toSet ++ existingParquet.columns.toSet
+
+      def getNewColumns(column: Set[String], merged_cols: Set[String]) = {
+        merged_cols.toList.map(x => x match {
+          case x if column.contains(x) => col(x)
+          case _ => lit(null).as(x)
+        })
+      }
+
+
+      val res = existingParquet.select(getNewColumns(existingParquet.columns.toSet, merged_cols): _*)
+        .unionAll(userMatrix.select(getNewColumns(userMatrix.columns.toSet, merged_cols): _*))
       val aggs = res.columns.filter(x => x != "uid").map(x => sum(x).as(s"$x"))
       res.groupBy("uid")
         .agg(aggs.head, aggs.tail: _*)
         .where($"uid".isNotNull)
         .write.mode("overwrite")
-        .parquet(s"$output_dir/users-items/$maxDateRewrite")
+        .parquet(s"$output_dir/$maxDateRewrite")
     }
     else {
-      userMatrix.write.mode("overwrite").parquet(s"$output_dir/users-items/$maxDateExist")
+      userMatrix.write.mode("overwrite").parquet(s"$output_dir/$maxDateExist")
     }
   }
 }
