@@ -57,25 +57,25 @@ object users_items {
       .withColumn("uid", coalesce($"uid_view", $"uid_buy"))
       .drop("uid_view", "uid_buy")
     if (update == "1") {
-      val existingParquet = spark.read.parquet(s"$output_dir/$maxDateExist")
-      val merged_cols = userMatrix.columns.toSet ++ existingParquet.columns.toSet
+          val existingParquet = spark.read.parquet(s"$output_dir/$maxDateExist")
+          val merged_cols = userMatrix.columns.toSet ++ existingParquet.columns.toSet
 
-      def getNewColumns(column: Set[String], merged_cols: Set[String]) = {
-        merged_cols.toList.map(x => x match {
-          case x if column.contains(x) => col(x)
-          case _ => lit(null).as(x)
-        })
-      }
+          def getNewColumns(column: Set[String], merged_cols: Set[String]) = {
+            merged_cols.toList.map(x => x match {
+              case x if column.contains(x) => col(x)
+              case _ => lit(null).as(x)
+            })
+          }
 
 
-      val res = existingParquet.select(getNewColumns(existingParquet.columns.toSet, merged_cols): _*)
-        .unionAll(userMatrix.select(getNewColumns(userMatrix.columns.toSet, merged_cols): _*))
-      val aggs = res.columns.filter(x => x != "uid").map(x => sum(x).as(s"$x"))
-      res.groupBy("uid")
-        .agg(aggs.head, aggs.tail: _*)
-        .where($"uid".isNotNull)
-        .write.mode("overwrite")
-        .parquet(s"$output_dir/$maxDateRewrite")
+          val res = existingParquet.select(getNewColumns(existingParquet.columns.toSet, merged_cols): _*)
+            .unionAll(userMatrix.select(getNewColumns(userMatrix.columns.toSet, merged_cols): _*))
+          val aggs = res.columns.filter(x => x != "uid").map(x => sum(x).as(s"$x"))
+          res.groupBy("uid")
+            .agg(aggs.head, aggs.tail: _*)
+            .where($"uid".isNotNull)
+            .write.mode("overwrite")
+            .parquet(s"$output_dir/$maxDateRewrite")
     }
     else {
       userMatrix.write.mode("overwrite").parquet(s"$output_dir/$maxDateExist")
