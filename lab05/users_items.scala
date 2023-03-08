@@ -3,7 +3,7 @@ import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types.{StringType, StructType, LongType, DoubleType}
 
 
-object user_items {
+object users_items {
   def main(args: Array[String]) = {
 
 
